@@ -84,7 +84,9 @@ if (window.Kinetic) {
 			context.fillStyle = this.getStroke();
 			context.beginPath();
 			context.moveTo(conn.from.x, conn.from.y);
-			context.lineTo(conn.to.x, conn.to.y);
+			context.bezierCurveTo(conn.from.x, conn.from.y + 100, conn.to.x, conn.to.y + 100, conn.to.x, conn.to.y);
+			//context.quadraticCurveTo(conn.from.x, conn.to.y, conn.to.x, conn.to.y);
+			//context.lineTo(conn.to.x, conn.to.y);
 			canvas.stroke(this);
 			this.setStrokeWidth(strokeWidth);
 		},
@@ -98,8 +100,11 @@ if (window.Kinetic) {
 			context.fillStyle = this.getStroke();
 			context.beginPath();
 			context.moveTo(conn.from.x, conn.from.y);
-			context.lineTo(conn.to.x, conn.to.y);
+			//context.lineTo(conn.to.x, conn.to.y);
+			//context.quadraticCurveTo(conn.from.x, conn.to.y, conn.to.x, conn.to.y);
+			context.bezierCurveTo(conn.from.x, conn.from.y + 100, conn.to.x, conn.to.y + 100, conn.to.x, conn.to.y);
 			canvas.stroke(this);
+			context.beginPath();
 			if (this.attrs.arrow) {
 				var a1x, a1y, a2x, a2y, len = 14, iy, m,
 					dx = conn.to.x - conn.from.x,

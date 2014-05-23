@@ -281,7 +281,7 @@ MAPJS.KineticMediator = function (mapModel, stage) {
 			shapeFrom: nodeByIdeaId[l.ideaIdFrom],
 			shapeTo: nodeByIdeaId[l.ideaIdTo],
 			dashArray: [8, 8],
-			stroke: '#800',
+			stroke: '#' + (l.attr ? l.attr.LineColor : '800'),
 			strokeWidth: 1.5
 		});
 		link.on('click tap', function (event) {

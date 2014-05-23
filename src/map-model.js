@@ -11,7 +11,6 @@ MAPJS.MapModel = function (layoutCalculatorArg, selectAllTitles, clipboardProvid
 			connectors: {}
 		},
 		idea,
-		currentLabelGenerator,
 		isInputEnabled = true,
 		isEditingEnabled = true,
 		currentlySelectedIdeaId,
@@ -27,21 +26,8 @@ MAPJS.MapModel = function (layoutCalculatorArg, selectAllTitles, clipboardProvid
 		},
 		horizontalSelectionThreshold = 300,
 		isAddLinkMode,
-		applyLabels = function (newLayout) {
-			if (!currentLabelGenerator) {
-				return;
-			}
-			var labelMap = currentLabelGenerator(idea);
-			_.each(newLayout.nodes, function (node, id) {
-				if (labelMap[id] || labelMap[id] === 0) {
-					node.label = labelMap[id];
-				}
-			});
-		},
 		updateCurrentLayout = function (newLayout) {
 			self.dispatchEvent('layoutChangeStarting');
-			applyLabels(newLayout);
-
 			_.each(currentLayout.connectors, function (oldConnector, connectorId) {
 				var newConnector = newLayout.connectors[connectorId];
 				if (!newConnector || newConnector.from !== oldConnector.from || newConnector.to !== oldConnector.to) {
@@ -83,9 +69,6 @@ MAPJS.MapModel = function (layoutCalculatorArg, selectAllTitles, clipboardProvid
 					}
 					if (!_.isEqual(newNode.attr || {}, oldNode.attr || {})) {
 						self.dispatchEvent('nodeAttrChanged', newNode);
-					}
-					if (newNode.label !== oldNode.label) {
-						self.dispatchEvent('nodeLabelChanged', newNode);
 					}
 				}
 			});
@@ -160,9 +143,6 @@ MAPJS.MapModel = function (layoutCalculatorArg, selectAllTitles, clipboardProvid
 	self.analytic = analytic;
 	self.getCurrentlySelectedIdeaId = getCurrentlySelectedIdeaId;
 	self.rebuildRequired = function () {
-		if (!idea) {
-			return;
-		}
 		updateCurrentLayout(self.reactivate(layoutCalculator(idea)));
 	};
 	this.setIdea = function (anIdea) {
@@ -185,10 +165,10 @@ MAPJS.MapModel = function (layoutCalculatorArg, selectAllTitles, clipboardProvid
 	this.getEditingEnabled = function () {
 		return isEditingEnabled;
 	};
-	this.setInputEnabled = function (value, holdFocus) {
+	this.setInputEnabled = function (value) {
 		if (isInputEnabled !== value) {
 			isInputEnabled = value;
-			self.dispatchEvent('inputEnabledChanged', value, !!holdFocus);
+			self.dispatchEvent('inputEnabledChanged', value);
 		}
 	};
 	this.getInputEnabled = function () {
@@ -1015,9 +995,5 @@ MAPJS.MapModel = function (layoutCalculatorArg, selectAllTitles, clipboardProvid
 			return dropOn(nodeId, 'left');
 		}
 		addNew();
-	};
-	self.setLabelGenerator = function (labelGenerator) {
-		currentLabelGenerator = labelGenerator;
-		self.rebuildRequired();
 	};
 };

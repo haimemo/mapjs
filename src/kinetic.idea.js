@@ -124,10 +124,13 @@ if (window.Kinetic) {
 	Kinetic.Idea = function (config) {
 		var ENTER_KEY_CODE = 13,
 			ESC_KEY_CODE = 27,
+			//Shapes = { 3 : 'Rect', 1: 'Circle', 2: 'None', 4: 'Circle', 5: 'Oval', 6: 'Hexagon'},
 			self = this,
 			unformattedText = config.text,
-			bgRect = function (offset) {
-				return new Kinetic.Rect({
+			shapeConfig1 = config.mmAttr && config.mmAttr.style &&  config.mmAttr.style.shape ? config.mmAttr.style.shape : null,
+			shapeConfig = !shapeConfig1 ? (config.mmAttr.shape ? config.mmAttr.shape : MAPJS.defaultStyles['nonRoot'].shape) : shapeConfig1,
+			bgShape = function (offset) {
+				return new Kinetic[shapeConfig]({
 					strokeWidth: 1,
 					cornerRadius: 10,
 					x: offset,
@@ -142,13 +145,13 @@ if (window.Kinetic) {
 		config.draggable = config.level > 1;
 		config.name = 'Idea';
 		Kinetic.Group.call(this, config);
-		this.rectAttrs = {stroke: '#888', strokeWidth: 1};
-		this.rect = new Kinetic.Rect({
+		this.shapeAttrs = {stroke: '#888', strokeWidth: 1};
+		this.shape = new Kinetic[shapeConfig]({
 			strokeWidth: 1,
 			cornerRadius: 10
 		});
-		this.rectbg1 = bgRect(8);
-		this.rectbg2 = bgRect(4);
+		this.shapebg1 = bgShape(8);
+		this.shapebg2 = bgShape(4);
 		this.link = createLink();
 		this.link.on('click tap', function () {
 			var url = MAPJS.URLHelper.getLink(unformattedText);
@@ -174,9 +177,9 @@ if (window.Kinetic) {
 			self.fire(':request', {type: 'openAttachment', source: 'mouse'});
 		});
 		this.icon = createIcon();
-		this.add(this.rectbg1);
-		this.add(this.rectbg2);
-		this.add(this.rect);
+		this.add(this.shapebg1);
+		this.add(this.shapebg2);
+		this.add(this.shape);
 		this.add(this.icon);
 		this.add(this.text);
 		this.add(this.link);
@@ -244,8 +247,8 @@ if (window.Kinetic) {
 					'line-height': '150%',
 					'background-color': self.getBackground(),
 					'margin': -3 * scale,
-					'border-radius': self.rect.getCornerRadius() * scale + 'px',
-					'border': self.rectAttrs.strokeWidth * (2 * scale) + 'px dashed ' + self.rectAttrs.stroke,
+					'border-radius': self.shape.getCornerRadius() * scale + 'px',
+					'border': self.shapeAttrs.strokeWidth * (2 * scale) + 'px dashed ' + self.shapeAttrs.stroke,
 					'color': self.text.getFill(),
 					'overflow': 'hidden'
 				})
@@ -304,7 +307,7 @@ if (window.Kinetic) {
 Kinetic.Idea.prototype.setShadowOffset = function (offset) {
 	'use strict';
 	offset = this.getMMScale().x * offset;
-	_.each([this.rect, this.rectbg1, this.rectbg2], function (r) {
+	_.each([this.shape, this.shapebg1, this.shapebg2], function (r) {
 		r.setShadowOffset([offset, offset]);
 	});
 };
@@ -340,7 +343,7 @@ Kinetic.Idea.prototype.setupShadows = function () {
 		return;
 	}
 	this.oldShadow = {selected: isSelected, scale: scale, offset: offset};
-	_.each([this.rect, this.rectbg1, this.rectbg2], function (r) {
+	_.each([this.shape, this.shapebg1, this.shapebg2], function (r) {
 		r.setShadowColor(shadow.color);
 		r.setShadowBlur(shadow.blur);
 		r.setShadowOpacity(shadow.opacity);
@@ -363,6 +366,13 @@ Kinetic.Idea.prototype.getBackground = function () {
 	return validColor(this.mmAttr && this.mmAttr.style && this.mmAttr.style.background, defaultBg);
 };
 
+Kinetic.Idea.prototype.getShape = function () {
+	'use strict';
+	/*jslint newcap: true*/
+	var isRoot = this.level === 1,
+		defaultShape = MAPJS.defaultStyles[isRoot ? 'root' : 'nonRoot'].shape;
+	return (this.mmAttr && this.mmAttr.style && this.mmAttr.style.shape)? this.mmAttr.style.shape : defaultShape;
+};
 
 Kinetic.Idea.prototype.setStyle = function () {
 	'use strict';
@@ -373,7 +383,8 @@ Kinetic.Idea.prototype.setStyle = function () {
 		isActivated = this.isActivated,
 		background = this.getBackground(),
 		tintedBackground = Color(background).mix(Color('#EEEEEE')).hexString(),
-		rectOffset,
+		shapeConfig = this.getShape(),
+		shapeOffset,
 		rectIncrement = 4,
 		padding = 8,
 		isClipVisible = self.mmAttr && self.mmAttr.attachment,
@@ -399,7 +410,11 @@ Kinetic.Idea.prototype.setStyle = function () {
 			var iconPos = self.mmAttr && self.mmAttr.icon && self.mmAttr.icon.position;
 			if (!iconPos || iconPos === 'center') {
 				self.text.setX((calculatedSize.width - self.text.getWidth()) / 2);
-				self.text.setY((calculatedSize.height - self.text.getHeight()) / 2 + clipMargin);
+				if(shapeConfig == 'Rect') {
+					self.text.setY((calculatedSize.height - self.text.getHeight()) / 2 + clipMargin);
+				} else if(shapeConfig == 'Circle') {
+					self.text.setY((calculatedSize.width - self.text.getHeight()) / 2 + clipMargin);
+				}
 				self.icon.setY((calculatedSize.height - self.icon.getHeight()) / 2 + clipMargin);
 				self.icon.setX((calculatedSize.width - self.icon.getWidth()) / 2);
 			} else if (iconPos === 'bottom') {
@@ -450,38 +465,49 @@ Kinetic.Idea.prototype.setStyle = function () {
 	this.icon.updateMapjsAttribs(self.mmAttr && self.mmAttr.icon);
 
 	this.clip.setVisible(clipMargin);
-	this.setWidth(calculatedSize.width);
-	this.setHeight(calculatedSize.height + clipMargin);
+	if(shapeConfig == 'Rect') {
+		this.setWidth(calculatedSize.width);
+		this.setHeight(calculatedSize.height + clipMargin);
+	} else if(shapeConfig == 'Circle') {
+		this.setWidth(calculatedSize.width);
+		this.setHeight(calculatedSize.width);
+	}
 	this.link.setX(calculatedSize.width - 2 * padding + 10);
 	this.link.setY(calculatedSize.height - 2 * padding + 5 + clipMargin);
 	positionTextAndIcon();
-	rectOffset = clipMargin;
-	_.each([this.rect, this.rectbg2, this.rectbg1], function (r) {
-		r.setWidth(calculatedSize.width);
-		r.setHeight(calculatedSize.height);
-		r.setY(rectOffset);
-		rectOffset += rectIncrement;
+	shapeOffset = clipMargin;
+	_.each([this.shape, this.shapebg2, this.shapebg1], function (s) {
+		if(shapeConfig == 'Rect') {
+			s.setWidth(calculatedSize.width);
+			s.setHeight(calculatedSize.height);
+			s.setY(shapeOffset);
+		} else if(shapeConfig == 'Circle') {
+			s.setRadius(calculatedSize.width / 2);
+			s.setX(calculatedSize.width / 2);
+			s.setY(calculatedSize.width / 2);
+		}
+		shapeOffset += rectIncrement;
 		if (isDroppable) {
-			r.setStroke('#9F4F4F');
-			r.setFill('#EF6F6F');
+			s.setStroke('#9F4F4F');
+			s.setFill('#EF6F6F');
 		} else if (isSelected) {
-			r.setFill(background);
+			s.setFill(background);
 		} else {
-			r.setStroke(self.rectAttrs.stroke);
-			r.setFill(background);
+			s.setStroke(self.shapeAttrs.stroke);
+			s.setFill(background);
 		}
 	});
 	if (isActivated) {
-		this.rect.setStroke('#2E9AFE');
+		this.shape.setStroke('#2E9AFE');
 		var dashes = [[5, 3, 0, 0], [4, 3, 1, 0], [3, 3, 2, 0], [2, 3, 3, 0], [1, 3, 4, 0], [0, 3, 5, 0], [0, 2, 5, 1], [0, 1, 5, 2]];
 		if (true || this.disableAnimations) {
-			self.rect.setDashArray(dashes[0]);
+			self.shape.setDashArray(dashes[0]);
 		} else {
 			if (!this.activeAnimation) {
 				this.activeAnimation = new Kinetic.Animation(
 			        function (frame) {
 						var da = dashes[Math.floor(frame.time / 30) % 8];
-						self.rect.setDashArray(da);
+						self.shape.setDashArray(da);
 			        },
 			        self.getLayer()
 			    );
@@ -492,12 +518,12 @@ Kinetic.Idea.prototype.setStyle = function () {
 		if (this.activeAnimation) {
 			this.activeAnimation.stop();
 		}
-		this.rect.setDashArray([]);
+		this.shape.setDashArray([]);
 	}
-	this.rect.setDashArray(getDash());
-	this.rect.setStrokeWidth(this.isActivated ? 3 : self.rectAttrs.strokeWidth);
-	this.rectbg1.setVisible(this.isCollapsed());
-	this.rectbg2.setVisible(this.isCollapsed());
+	this.shape.setDashArray(getDash());
+	this.shape.setStrokeWidth(this.isActivated ? 3 : self.shapeAttrs.strokeWidth);
+	this.shapebg1.setVisible(this.isCollapsed());
+	this.shapebg2.setVisible(this.isCollapsed());
 	this.clip.setX(calculatedSize.width - padding);
 	this.setupShadows();
 	this.text.setFill(MAPJS.contrastForeground(tintedBackground));

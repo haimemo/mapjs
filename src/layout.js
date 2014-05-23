@@ -180,7 +180,7 @@ MAPJS.Tree = function (options) {
 			self.y = y + this.deltaY || 0;
 		}
 		result.nodes[this.id] = self;
-		if (parentId !== undefined) {
+		if (parentId !== undefined && !self.attr.isFloat) {
 			result.connectors[self.id] = {
 				from: parentId,
 				to: self.id

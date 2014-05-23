@@ -50,7 +50,7 @@ if (window.Kinetic) {
 				x: childX + childHorizontalOffset * childWidth,
 				y: childY + 0.5 * childHeight
 			},
-			controlPointOffset: 0.75
+			controlPointOffset: 0.0
 		};
 	}, function () {
 		return Array.prototype.join.call(arguments, ',');

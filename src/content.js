@@ -91,16 +91,11 @@ MAPJS.content = function (contentAggregate, sessionKey) {
 				});
 				return result;
 			};
-			contentIdea.traverse = function (iterator, postOrder) {
-				if (!postOrder) {
-					iterator(contentIdea);
-				}
+			contentIdea.traverse = function (iterator) {
+				iterator(contentIdea);
 				_.each(contentIdea.sortedSubIdeas(), function (subIdea) {
-					subIdea.traverse(iterator, postOrder);
+					subIdea.traverse(iterator);
 				});
-				if (postOrder) {
-					iterator(contentIdea);
-				}
 			};
 			return contentIdea;
 		},
